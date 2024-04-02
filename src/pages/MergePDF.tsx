@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
-import { Page, Document } from '@react-pdf/renderer';
 import { Button } from "../components/ui/Button";
+import { DocumentView } from "../components/PDFDocumentView/DocumentView";
+import { Modal } from "../components/modal/Modal";
 
 export const MergePDF: React.FC = () => {
     const [files, setFiles] = useState<File[]>([]);
     const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+
+    const addFiles = (newFiles: FileList) => {
+        const updatedFiles = [...files, ...newFiles];
+        setFiles(updatedFiles);
+        console.log(files);
+    };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
             const selectedFiles = Array.from(event.target.files);
-            setFiles([...files, ...selectedFiles]);
+            //setFiles([...files, ...selectedFiles]);
+            addFiles(selectedFiles);
         }
     };
 
@@ -38,6 +47,8 @@ export const MergePDF: React.FC = () => {
         const mergedPdfBlob = new Blob([mergedPdfData], { type: 'application/pdf' });
         const mergedPdfUrl = URL.createObjectURL(mergedPdfBlob);
         setMergedPdfUrl(mergedPdfUrl);
+
+
     };
 
     const handleDownload = () => {
@@ -58,25 +69,28 @@ export const MergePDF: React.FC = () => {
         }
     };
 
-    const renderPdfPreview = (file: File) => {
-        const url = URL.createObjectURL(file);
-        return (
-            <div key={file.name}>
-                <Document file={url}>
-                    <Page pageNumber={1} width={200} height={150} scale={0.7} />
-                </Document>
-            </div>
-        );
+    const handleRemoveFile = (fileName: string) => {
+        const newFiles = files.filter(file => file.name !== fileName);
+        setFiles(newFiles);
     };
 
+    const handleMerg = async () => {
+        await mergePDFs();
+        setShowModal(true);
+    }
 
+    useEffect(() => {
+        console.log('Lista de arquivos atualizada:', files);
+    }, [files]);
     
     return (
         <div className="flex flex-col items-center justify-center w-full h-full gap-y-4">
             <h2 className=" text-lg">Juntar arquivos PDF</h2>
             <input type="file" accept=".pdf" multiple onChange={handleFileChange} />
             <div className="flex border border-red-800 rounded-lg p-2 gap-4">
-                {files.map((file) => renderPdfPreview(file))}
+                {files.map((file) => (
+                    <DocumentView name={file.name}  onRemove={handleRemoveFile} />
+                ))}
             </div>
             {mergedPdfUrl ? (
                 <div>
@@ -84,8 +98,9 @@ export const MergePDF: React.FC = () => {
                     <Button children="Compartilhar PDF" onClick={handleShare} />
                 </div>
             ) : (
-                <Button children="Mesclar PDFs" onClick={mergePDFs} />
+                <Button children="Mesclar PDFs" onClick={handleMerg} />
             )}
+            <Modal Title="Finalizar" Show={showModal} Component={`<p>Obrigado por utilizar</p>`} />
         </div>
     )
 }
