@@ -1,0 +1,9 @@
+.dropzone p {
+    font-size: 1.4em;
+}
+
+.uploaded-input::-webkit-file-upload-button {
+    background-color: red;
+    color: white;
+    border: none;
+}

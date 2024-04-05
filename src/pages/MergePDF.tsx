@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
+import Dropzone from "react-dropzone";
+
 import { Button } from "../components/ui/Button";
 import { DocumentView } from "../components/PDFDocumentView/DocumentView";
-import { Modal } from "../components/modal/Modal";
+import "./MergePDF.css";
 
 export const MergePDF: React.FC = () => {
     const [files, setFiles] = useState<File[]>([]);
     const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState(false);
+
+    const handleDrop = (acceptedFiles) => {
+        // Validação para aceitar apenas arquivos PDF
+        const acceptedFileTypes = ["application/pdf"];
+        const invalidFiles = acceptedFiles.filter(
+            (file) => !acceptedFileTypes.includes(file.type)
+        );
+    
+        if (invalidFiles.length > 0) {
+            alert("Somente arquivos PDF são permitidos!");
+            return;
+        }
+    
+        setFiles([...files, ...acceptedFiles]);
+    };
 
     const addFiles = (newFiles: FileList) => {
         const updatedFiles = [...files, ...newFiles];
@@ -47,8 +63,6 @@ export const MergePDF: React.FC = () => {
         const mergedPdfBlob = new Blob([mergedPdfData], { type: 'application/pdf' });
         const mergedPdfUrl = URL.createObjectURL(mergedPdfBlob);
         setMergedPdfUrl(mergedPdfUrl);
-
-
     };
 
     const handleDownload = () => {
@@ -74,11 +88,6 @@ export const MergePDF: React.FC = () => {
         setFiles(newFiles);
     };
 
-    const handleMerg = async () => {
-        await mergePDFs();
-        setShowModal(true);
-    }
-
     useEffect(() => {
         console.log('Lista de arquivos atualizada:', files);
     }, [files]);
@@ -86,21 +95,55 @@ export const MergePDF: React.FC = () => {
     return (
         <div className="flex flex-col items-center justify-center w-full h-full gap-y-4">
             <h2 className=" text-lg">Juntar arquivos PDF</h2>
-            <input type="file" accept=".pdf" multiple onChange={handleFileChange} />
-            <div className="flex border border-red-800 rounded-lg p-2 gap-4">
-                {files.map((file) => (
-                    <DocumentView name={file.name}  onRemove={handleRemoveFile} />
-                ))}
-            </div>
-            {mergedPdfUrl ? (
-                <div>
-                    <Button children="Baixar PDF" onClick={handleDownload} />
-                    <Button children="Compartilhar PDF" onClick={handleShare} />
-                </div>
+            {files.length === 0 ? (
+                <Dropzone
+                    accept=".pdf"
+                    onDrop={handleDrop}
+                >
+                    {({ getRootProps, getInputProps }) => (
+                        <div {...getRootProps()} className="dropzone flex items-center justify-center border-2 border-dashed px-8 py-12 border-red-600 rounded-lg  cursor-pointer" >
+                            <input {...getInputProps()} />
+                            <p className="text-red-600 font-extrabold text-center">Arraste seus arquivos PDF aqui <br />Ou clique para selecionalos</p>
+                        </div>
+                    )}
+                </Dropzone>
             ) : (
-                <Button children="Mesclar PDFs" onClick={handleMerg} />
+                <div className="flex flex-col gap-2">
+                    {mergedPdfUrl ? (
+                        <div className="flex items-center justify-center">
+                            <DocumentView />
+                        </div>
+                    ) : (
+                        <Dropzone
+                            accept=".pdf"
+                            onDrop={handleDrop}
+                            noClick
+                        >
+                            {({getRootProps}) => (
+                                <div {...getRootProps()} className="flex items-center justify-center border-2 border-dashed p-4 border-red-600 rounded-lg gap-2">
+                                    {files.map((file) => (
+                                        <DocumentView name={file.name}  onRemove={handleRemoveFile} />
+                                    ))}
+                                </div>
+                            )}
+                        </Dropzone>
+                    )}
+                    {mergedPdfUrl ? (
+                        <div className="flex flex-col gap-2 justify-center">
+                            <input type="text" name="mergerName" id="mergedName" placeholder="Escolha o nome do arquivo." className="block w-full rounded-md border-0 py-1.5 pl-7 pr-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                            <div className="flex gap-2 justify-center">
+                                <Button children="Baixar PDF" onClick={handleDownload} />
+                                <Button children="Compartilhar PDF" onClick={handleShare} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <input type="file" accept=".pdf" className="uploaded-input border border-red-700  pr-2 rounded-lg" multiple onChange={handleFileChange} />
+                            <Button children="Mesclar PDFs" onClick={mergePDFs} />
+                        </div>
+                    )}
+                </div>
             )}
-            <Modal Title="Finalizar" Show={showModal} Component={`<p>Obrigado por utilizar</p>`} />
         </div>
     )
 }
