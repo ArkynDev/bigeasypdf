@@ -4,6 +4,7 @@ import Dropzone from "react-dropzone";
 
 import { Button } from "../components/ui/Button";
 import { DocumentView } from "../components/PDFDocumentView/DocumentView";
+import { FirstPage } from "../components/FirstPage";
 import "./MergePDF.css";
 
 export const MergePDF: React.FC = () => {
@@ -122,7 +123,8 @@ export const MergePDF: React.FC = () => {
                             {({getRootProps}) => (
                                 <div {...getRootProps()} className="flex items-center justify-center border-2 border-dashed p-4 border-red-600 rounded-lg gap-2">
                                     {files.map((file) => (
-                                        <DocumentView name={file.name}  onRemove={handleRemoveFile} />
+                                        //<DocumentView name={file.name}  onRemove={handleRemoveFile} />
+                                        <FirstPage file={file} />
                                     ))}
                                 </div>
                             )}
